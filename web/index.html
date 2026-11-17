@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>分段发布控制台 · Segmented Delivery</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">◧</span>
+    <div>
+      <h1>分段发布控制台</h1>
+      <p class="sub">构建器 · 发布目录 · 消费端，三个进程，真实文件传输</p>
+    </div>
+  </div>
+  <div class="status" id="server-status">
+    <span class="dot"></span><span id="status-text">连接中…</span>
+  </div>
+</header>
+
+<main>
+  <section class="panel" id="release-panel">
+    <div class="panel-head">
+      <h2>发布目录 <span class="muted" id="release-path"></span></h2>
+      <div class="actions">
+        <button id="btn-reset" class="ghost danger" title="清空发布目录和所有消费端，从空目录重新开始">重置为空目录</button>
+      </div>
+    </div>
+    <div class="publish-row">
+      <label>新增版本数 <input id="pub-count" type="number" min="1" max="5" value="1"></label>
+      <label>每版修改记录 <input id="pub-edits" type="number" min="0" max="10" value="1"></label>
+      <label class="check"><input id="pub-skip" type="checkbox"> 跳过一版（制造版本缺口）</label>
+      <label>差分策略
+        <select id="pub-diffmode">
+          <option value="all">每版对全部旧版生成差分</option>
+          <option value="previous">每版只对上一版生成差分</option>
+        </select>
+      </label>
+      <button id="btn-publish" class="primary">发布新版本</button>
+    </div>
+    <div id="release-list" class="release-list"></div>
+  </section>
+
+  <section class="panel" id="consumer-panel">
+    <div class="panel-head">
+      <h2>消费端</h2>
+      <p class="hint">每个消费端有自己的本地段存储。升级前可选“制造故障”来模拟旧段损坏或缺失。</p>
+    </div>
+    <div id="consumer-list" class="consumer-grid"></div>
+  </section>
+
+  <section class="panel" id="ops-panel">
+    <div class="panel-head"><h2>升级计划与执行</h2></div>
+    <div class="ops-row">
+      <label>消费端
+        <select id="op-consumer"></select>
+      </label>
+      <label>目标版本
+        <select id="op-version"></select>
+      </label>
+      <label>偏好
+        <select id="op-prefer">
+          <option value="auto">auto（选最省流量且可校验）</option>
+          <option value="diff">diff（无可用差分则失败）</option>
+          <option value="full">full（整包回退）</option>
+        </select>
+      </label>
+      <label>升级前制造故障
+        <select id="op-damage">
+          <option value="">不制造</option>
+          <option value="corrupt-needed">损坏差分需要的旧段</option>
+          <option value="corrupt-any">损坏任意旧段</option>
+          <option value="delete-needed">删除差分需要的旧段</option>
+          <option value="delete-any">删除任意旧段</option>
+        </select>
+      </label>
+      <label>中断模拟
+        <select id="op-interrupt">
+          <option value="">不中断</option>
+          <option value="1">下载 1 个段后中断</option>
+          <option value="2">下载 2 个段后中断</option>
+          <option value="3">下载 3 个段后中断</option>
+        </select>
+      </label>
+      <button id="btn-plan" class="ghost">只计算计划</button>
+      <button id="btn-upgrade" class="primary">执行升级</button>
+    </div>
+    <div id="plan-output" class="output hidden"></div>
+  </section>
+
+  <section class="panel" id="query-panel">
+    <div class="panel-head"><h2>消费端查询</h2></div>
+    <div class="ops-row">
+      <label>消费端 <select id="q-consumer"></select></label>
+      <label>版本
+        <select id="q-version"><option value="">最新</option></select>
+      </label>
+      <label>分类
+        <select id="q-category">
+          <option value="">全部</option>
+          <option value="alpha">alpha</option>
+          <option value="beta">beta</option>
+          <option value="gamma">gamma</option>
+          <option value="delta">delta</option>
+        </select>
+      </label>
+      <label>最低分 <input id="q-minscore" type="number" min="0" max="100" step="1" value="0"></label>
+      <label>文本 <input id="q-text" type="text" placeholder="标题或正文"></label>
+      <label>条数 <input id="q-limit" type="number" min="1" max="200" value="8"></label>
+      <button id="btn-query" class="primary">查询</button>
+    </div>
+    <div id="query-output" class="output hidden"></div>
+  </section>
+
+  <section class="panel" id="gc-panel">
+    <div class="panel-head">
+      <h2>旧版清理</h2>
+      <p class="hint">清理只删除不再被任何保留版本或差分链引用的文件；被引用的旧段永不删除。</p>
+    </div>
+    <div class="ops-row">
+      <label>保留最近 N 版 <input id="gc-keep" type="number" min="1" max="20" value="2"></label>
+      <label class="check"><input id="gc-dry" type="checkbox" checked> 仅预演</label>
+      <button id="btn-gc" class="ghost">执行清理</button>
+    </div>
+    <div id="gc-output" class="output hidden"></div>
+  </section>
+
+  <section class="panel" id="log-panel">
+    <div class="panel-head"><h2>事件</h2></div>
+    <ul id="event-log" class="event-log"></ul>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
